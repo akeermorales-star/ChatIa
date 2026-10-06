@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ChatIa · TikTok LIVE</title>
+<style>
+:root{--bg:#10131c;--panel:#171b28;--line:#262c3f;--tx:#e9ecf5;--mut:#8b93ab;--live:#ff3d6e;--ok:#3de0b0;--acc:#7c8cff}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--tx);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);display:flex;flex-direction:column}
+header{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
+h1{font-size:19px;margin:0;font-weight:700;letter-spacing:-.01em}
+form{display:flex;gap:8px;flex:1;min-width:260px;max-width:620px}
+input[type=text],input[type=number],select,textarea{background:#0d1019;border:1px solid var(--line);color:var(--tx);border-radius:8px;padding:9px 11px;font:inherit;width:100%}
+button{background:var(--acc);color:#0b0d16;border:0;border-radius:8px;padding:9px 14px;font:inherit;font-weight:600;cursor:pointer;white-space:nowrap}
+button.ghost{background:transparent;color:var(--tx);border:1px solid var(--line)}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+#st{flex-basis:100%;display:flex;align-items:center;gap:7px;color:var(--mut);font-size:13px}
+#dot{width:9px;height:9px;border-radius:50%;background:var(--mut)}
+.connected #dot{background:var(--live)}.connected #stx{color:var(--tx);font-weight:600}.connecting #dot,.reconnecting #dot{background:#f5b942}.error #dot{background:var(--live)}
+main{flex:1;min-height:0;display:grid;grid-template-columns:1fr 320px;grid-template-rows:minmax(0,1fr);gap:12px;padding:12px}
+section,details{background:var(--panel);border:1px solid var(--line);border-radius:10px;min-height:0}
+section{display:flex;flex-direction:column}
+h2,summary{font-size:13px;font-weight:600;color:var(--mut);margin:0;padding:11px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+section>h2{border-bottom:1px solid var(--line)}
+summary{cursor:pointer;list-style:none}summary::-webkit-details-marker{display:none}
+summary:after{content:"▸";transition:transform .15s}details[open]>summary:after{transform:rotate(90deg)}
+details[open]>summary{border-bottom:1px solid var(--line)}
+.mini{font-weight:400;font-size:12px;color:var(--mut);white-space:nowrap}
+#chat{flex:1;overflow-y:auto;padding:6px 14px;overscroll-behavior:contain}
+.m{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #1d2233}
+.m img,.m i{width:36px;height:36px;border-radius:50%;flex:none;background:#2a3047;object-fit:cover}
+.u{font-weight:600;color:var(--acc);cursor:pointer;word-break:break-all}.t{word-break:break-word;font-size:16px}
+.ev{color:var(--mut);font-size:14px}
+aside{display:flex;flex-direction:column;gap:12px;overflow-y:auto;min-height:0}
+aside>section:not(#fsec){flex:none} /* los paneles no se encogen ni se encima su contenido al abrir Filtros */
+.box{padding:12px 14px;display:grid;gap:12px}
+label{display:grid;gap:5px;color:var(--mut);font-size:13px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;color:var(--tx);font-size:14px}
+.sw{position:relative;width:42px;height:24px;flex:none}
+.sw input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer;z-index:1}
+.sw span{position:absolute;inset:0;background:#2a3047;border-radius:12px}
+.sw span:after{content:"";position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:#cfd5ea}
+.sw input:checked+span{background:var(--acc)}.sw input:checked+span:after{left:21px;background:#0b0d16}
+.sw input:focus-visible+span{outline:2px solid var(--acc);outline-offset:2px}
+.hint{font-size:12px;color:var(--mut);line-height:1.35}
+#q{font-size:12px;color:var(--mut)}
+/* ---- ⚙️ Filtros: colapsado por defecto; abierto, solo su interior hace scroll ---- */
+#fsec{flex:none}
+#fsec.open{flex:1 1 0;min-height:180px}
+.fhead{width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px;background:transparent;color:var(--mut);border:0;border-radius:10px;padding:11px 14px;font-size:13px;font-weight:600;text-align:left}
+.fhead .chev{transition:transform .15s}#fsec.open .chev{transform:rotate(90deg)}
+#fsec.open .fhead{border-bottom:1px solid var(--line);border-radius:10px 10px 0 0}
+.fbody{padding:0 14px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#2a3047 transparent}
+#fsec.open .fbody{flex:1 1 auto;min-height:0}
+.fbody::-webkit-scrollbar{width:8px}.fbody::-webkit-scrollbar-thumb{background:#2a3047;border-radius:4px}
+.fg{padding:14px 0;display:grid;gap:12px}.fg+.fg{border-top:1px solid var(--line)}
+.fg h3{margin:0;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);font-weight:700}
+.fr{display:grid;grid-template-columns:minmax(0,1fr) 112px;align-items:center;gap:12px;font-size:14px;line-height:1.25}
+.fr.sr{grid-template-columns:minmax(0,1fr) auto}
+.fr>label:not(.sw){color:var(--tx);font-size:14px;display:block}
+.fs{display:grid;gap:6px}.fs>.lb{font-size:13px;color:var(--mut)}
+.fbody input[type=text],.fbody input[type=number],.fbody select{height:36px;padding:0 10px}
+.fbody textarea{padding:8px 10px;min-height:56px;max-height:120px;resize:vertical}
+.fbody .hint{margin-top:-4px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.seg label{position:relative;display:block}
+.seg input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
+.seg span{display:block;text-align:center;padding:8px 6px;border:1px solid var(--line);border-radius:8px;background:#0d1019;color:var(--tx);font-size:13px;white-space:nowrap}
+.seg input:checked+span{background:var(--acc);border-color:var(--acc);color:#0b0d16;font-weight:600}
+.seg input:focus-visible+span{outline:2px solid var(--acc);outline-offset:2px}
+#cmdrow[hidden]{display:none}
+@media(max-width:820px){body{display:block}html,body{height:auto}main{grid-template-columns:1fr;grid-template-rows:none}#chat{height:55vh;flex:none}aside{overflow:visible}#fsec.open{flex:none;min-height:0}#fsec.open .fbody{max-height:70vh}}
+</style></head><body>
+<header><h1>ChatIa</h1>
+<form id="f"><input type="text" id="tg" placeholder="@usuario o enlace del LIVE" autocomplete="off" autocapitalize="off" aria-label="Link o usuario de TikTok LIVE"><button>Conectar</button></form>
+<div id="st"><span id="dot"></span><span id="stx">Desconectado</span></div></header>
+<main>
+<section><h2>💬 COMENTARIOS EN VIVO <span class="mini">👥 <span id="s_u">0</span> usuarios &nbsp; 💬 <span id="s_c">0</span> comentarios</span></h2><div id="chat" aria-live="off"><p class="ev" id="empty">Pega un @usuario que esté en LIVE y pulsa «Conectar».</p></div></section>
+<aside>
+<section><h2>🔊 Lector de voz</h2><div class="box">
+<div class="row">Leer comentarios <label class="sw"><input type="checkbox" id="on" aria-label="Leer comentarios"><span></span></label></div>
+<label>Voz<select id="voice"><option value="">Cargando voces del dispositivo…</option></select></label>
+<button class="ghost" type="button" id="test">🔊 Probar voz</button>
+<label>Velocidad <input type="range" id="rate" min=".6" max="2" step=".1" value="1.1"></label>
+<label>Volumen <input type="range" id="vol" min="0" max="1" step=".05" value="1"></label>
+<div class="row">Leer nombre del usuario <label class="sw"><input type="checkbox" id="rn" checked aria-label="Leer nombre del usuario"><span></span></label></div>
+<label id="eng_wrap" hidden>Motor de voz<select id="eng"><option value="browser">Voz del navegador</option><option value="server" disabled>Voz del servidor</option></select></label>
+<div id="q">En cola: 0</div></div></section>
+<section><h2>⚡ Baja latencia</h2><div class="box">
+<div class="row">Modo baja latencia <label class="sw"><input type="checkbox" id="ll" checked aria-label="Modo baja latencia"><span></span></label></div>
+<div class="hint">Descarta comentarios atrasados para mantener la lectura sincronizada con el LIVE.</div></div></section>
+<section id="fsec"><button type="button" class="fhead" id="fbtn" aria-expanded="false" aria-controls="fbody"><span>⚙️ Filtros</span><span class="chev" aria-hidden="true">▸</span></button>
+<div class="fbody" id="fbody" hidden>
+<div class="fg"><h3>Lectura</h3>
+<div class="fs" role="radiogroup" aria-labelledby="rm_lb"><span class="lb" id="rm_lb">¿Qué comentarios leer?</span>
+<div class="seg"><label><input type="radio" name="rm" id="rm_all" value="all" checked><span>Todos</span></label><label><input type="radio" name="rm" id="rm_cmd" value="cmd"><span>Con comando</span></label></div></div>
+<div class="fs" id="cmdrow" hidden><label class="lb" for="cmd">Comando para activar lectura</label><input type="text" id="cmd" value="/" placeholder="/" maxlength="30" autocomplete="off" autocapitalize="off" spellcheck="false"><div class="hint">Se lee solo lo que va después del comando.</div></div>
+<div class="fr sr"><span>🪙 Solo usuarios que donaron</span><label class="sw"><input type="checkbox" id="do" aria-label="Solo leer usuarios que hayan donado"><span></span></label></div></div>
+<div class="fg"><h3>Contenido</h3>
+<div class="fr sr"><span>No repetir comentarios</span><label class="sw"><input type="checkbox" id="dd" checked aria-label="No repetir comentarios"><span></span></label></div>
+<div class="fr sr"><span>Ignorar solo emojis</span><label class="sw"><input type="checkbox" id="eo" checked aria-label="Ignorar solo emojis"><span></span></label></div>
+<div class="fr"><label for="ml">Máximo de caracteres</label><input type="number" id="ml" value="140" min="10" max="500"></div></div>
+<div class="fg"><h3>Frecuencia</h3>
+<div class="fr"><label for="gap">Segundos entre lecturas</label><input type="number" id="gap" value="1" min="0" max="30" step=".5"></div>
+<div class="fr"><label for="pm">Máximo por minuto</label><select id="pm"><option>10</option><option>20</option><option>30</option><option value="0" selected>Sin límite</option></select></div></div>
+<div class="fg"><h3>Moderación</h3>
+<div class="fs"><label class="lb" for="bw">Palabras bloqueadas (separadas por coma)</label><textarea id="bw" rows="2"></textarea></div>
+<div class="fs"><label class="lb" for="mu">Usuarios silenciados (clic en un nombre del chat para añadir)</label><textarea id="mu" rows="2"></textarea></div></div>
+</div></section>
+</aside></main>
+<script src="tts-queue.js"></script>
+<script src="speech-text.js"></script>
+<script src="chat-filters.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const S={c:0,users:new Set()};let target='',ws,retry=0,wantConn=false;
+// ---- límites de la cola de voz (fáciles de modificar) ----
+const MAX_COMMENT_AGE=10000;            // ms: un comentario más viejo que esto NO se lee
+const MAX_QUEUE_SIZE=5;                 // comentarios pendientes máximos (se pierden los más antiguos)
+const LOW_LATENCY_MAX_COMMENT_AGE=8000; // idem en «Modo baja latencia»
+const LOW_LATENCY_MAX_QUEUE_SIZE=3;
+const DEBUG_TTS=true;                   // logs [TTS] / [PAGE] / [WS] en la consola
+const dbg=(...a)=>{if(DEBUG_TTS)console.log(...a)};
+// ---- ajustes persistentes ----
+const ids=['rn','rate','vol','dd','eo','ml','gap','pm','bw','mu','ll','eng','cmd','do'];
+const readMode=()=>$('rm_cmd').checked?'cmd':'all'; // «¿Qué comentarios leer?»: todos | solo con comando
+try{const s=JSON.parse(localStorage.cs||'{}');ids.forEach(i=>{if(i in s)s[i]===true||s[i]===false?$(i).checked=s[i]:$(i).value=s[i]});if(s.rm==='cmd')$('rm_cmd').checked=true}catch{}
+const save=()=>{try{localStorage.cs=JSON.stringify({...Object.fromEntries(ids.map(i=>[i,$(i).type==='checkbox'?$(i).checked:$(i).value])),rm:readMode()})}catch{}};
+document.querySelectorAll('aside input,aside select,aside textarea').forEach(e=>e.addEventListener('change',save));
+// panel de filtros: el campo del comando solo aparece en modo «Con comando»; el panel empieza colapsado
+const syncMode=()=>{$('cmdrow').hidden=!$('rm_cmd').checked};syncMode();
+['rm_all','rm_cmd'].forEach(i=>$(i).addEventListener('change',()=>{syncMode();save()}));$('cmd').addEventListener('input',save);
+$('fbtn').addEventListener('click',()=>{const o=$('fsec').classList.toggle('open');$('fbody').hidden=!o;$('fbtn').setAttribute('aria-expanded',String(o))});
+// ---- voz ----
+const synth=window.speechSynthesis;let voices=[],lastSig='',gaveUp=false;
+const stamps=[],recent=[];
+let last=0,busy=false,gen=0,deadline=0,curDone=null,curSrc=null,cur=null,enabledAt=Infinity,readyAt=Infinity,lastLag=null;
+let hold=false,holdT=0,speakSeq=0;const live=new Set(); // hold: «Probar voz»/aviso hablando (los comentarios esperan); live: utterances vivos hasta onend (Safari los recolecta si no hay referencia)
+const attr=s=>String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const norm=l=>String(l||'').replace('_','-').toLowerCase();
+// --- selector de voces: SOLO lo que devuelve speechSynthesis.getVoices(); nada escrito a mano ---
+const LS_VOICE='chatia.voice';let chosen=null;
+try{chosen=JSON.parse(localStorage.getItem(LS_VOICE)||'null')}catch{}
+if(!chosen){try{const n=JSON.parse(localStorage.cs).voice;if(n)chosen={name:n}}catch{}} // ajuste guardado por versiones anteriores
+let dnLang=null,dnReg=null;try{dnLang=new Intl.DisplayNames(['es'],{type:'language'});dnReg=new Intl.DisplayNames(['es'],{type:'region'})}catch{}
+function langLabel(code){const [l,r]=norm(code).split('-');let a='',b='';
+ try{a=dnLang?dnLang.of(l):''}catch{}try{b=r&&dnReg?dnReg.of(r.toUpperCase()):''}catch{}
+ a=a||String(code||'');a=a.charAt(0).toUpperCase()+a.slice(1);return b&&b.toUpperCase()!==r.toUpperCase()?`${a} (${b})`:a}
+const vKey=v=>v.voiceURI||v.name;
+const matches=v=>!!chosen&&((chosen.uri&&v.voiceURI===chosen.uri)||(chosen.name&&v.name===chosen.name));
+const selVoice=()=>voices.find(v=>vKey(v)===$('voice').value)||null;
+const curLang=()=>{const v=selVoice();return v&&norm(v.lang).startsWith('en')?'en':'es'};
+const vLabel=v=>{const c=norm(v.lang);return c==='es-es'||c==='en-us'?langLabel(c.split('-')[0]):langLabel(v.lang)}; // «Español», «Español (México)», «Inglés (Reino Unido)»…
+function loadVoices(){voices=synth?synth.getVoices():[];
+ // máx. 5 voces REALES del dispositivo (hasta 3 en español + 2 en inglés, todas distintas): public/chat-filters.js
+ const shown=ChatFilters.pickVoices(voices,{chosen});
+ const sig=shown.map(x=>vKey(x.voice)).join('|')+'#'+voices.length;if(sig===lastSig&&(voices.length||!gaveUp))return;lastSig=sig; // no reconstruir si no cambió (no cierra el desplegable)
+ $('voice').innerHTML=shown.length
+  ?shown.map(x=>`<option value="${attr(vKey(x.voice))}">${attr(x.flag+' '+x.voice.name+' — '+vLabel(x.voice))}</option>`).join('')
+  :`<option value="">${voices.length?'No hay voces en español o inglés en este dispositivo':gaveUp?'Voz predeterminada del dispositivo':'Cargando voces del dispositivo…'}</option>`;
+ // 1) la última voz elegida (si está disponible), 2) la predeterminada del dispositivo si está en la lista, 3) la primera (español)
+ const pv=shown.map(x=>x.voice),pick=pv.find(matches)||pv.find(v=>v.default)||pv[0];
+ if(pick){$('voice').value=vKey(pick);dbg('[VOZ]',voices.length,'voces;',shown.length,'en el selector;','seleccionada:',pick.name)}}
+$('voice').addEventListener('change',()=>{const v=selVoice();if(!v)return;chosen={uri:v.voiceURI,name:v.name,lang:v.lang};
+ try{localStorage.setItem(LS_VOICE,JSON.stringify(chosen))}catch{}dbg('[VOZ] elegida:',v.name)});
+if(synth){synth.onvoiceschanged=loadVoices;loadVoices();[300,1000,2500,5000].forEach(t=>setTimeout(loadVoices,t));setTimeout(()=>{gaveUp=true;loadVoices()},6000)} // Safari puede tardar en cargar las voces
+const list=id=>$(id).value.split(',').map(s=>s.trim().toLowerCase().replace(/^@/,'')).filter(Boolean);
+const stripEmoji=t=>t.replace(/[\p{Extended_Pictographic}\p{Emoji_Presentation}\u200d\ufe0f]/gu,'').trim();
+// Cola con control de antigüedad (public/tts-queue.js)
+const limits=()=>$('ll').checked?{maxAge:LOW_LATENCY_MAX_COMMENT_AGE,maxQueue:LOW_LATENCY_MAX_QUEUE_SIZE}:{maxAge:MAX_COMMENT_AGE,maxQueue:MAX_QUEUE_SIZE};
+const qlabel=()=>$('q').textContent='En cola: '+queue.length+(lastLag!=null?' · último retraso: '+(lastLag/1000).toFixed(1)+' s':'');
+const queue=TtsQueue.create({getLimits:limits,log:dbg,onDrop:()=>qlabel()});
+$('ll').addEventListener('change',()=>{queue.prune();qlabel();dbg('[TTS] Modo baja latencia:',$('ll').checked?'ON':'OFF')});
+// ---- audio generado por el servidor (opcional): el navegador lo reproduce con Web Audio ----
+let AC=null,serverTts=false,ttsSeq=1,ka=null,lastResume=0;const ttsWait=new Map();
+function unlockAudio(){try{if(!AC){AC=new(window.AudioContext||window.webkitAudioContext)();AC.onstatechange=()=>dbg('[AUDIO] AudioContext:',AC.state)}
+ if(AC.state!=='running')AC.resume().catch(()=>{})}catch(e){dbg('[AUDIO] no disponible',e)}}
+// Tono inaudible continuo: un contexto de audio activo evita que el navegador suspenda/ralentice la pestaña en segundo plano.
+function startKeepAlive(){unlockAudio();if(!AC||ka)return;try{const o=AC.createOscillator(),g=AC.createGain();o.frequency.value=40;g.gain.value=0.0002;o.connect(g);g.connect(AC.destination);o.start();ka={o};dbg('[AUDIO] keep-alive activo')}catch{}}
+function stopKeepAlive(){try{ka&&ka.o.stop()}catch{}ka=null}
+const useServer=()=>$('eng').value==='server'&&serverTts&&AC&&ws&&ws.readyState===1;
+function engUi(){const wr=$('eng_wrap');if(wr)wr.hidden=!serverTts;const o=[...$('eng').options].find(o=>o.value==='server');if(!o)return;o.disabled=!serverTts;
+ o.textContent=serverTts?'Voz del servidor (estable en 2.º plano, voz robótica)':'Voz del servidor (no disponible en este servidor)';
+ if(!serverTts&&$('eng').value==='server')$('eng').value='browser'}
+function fetchAudio(text){const p=new Promise((res,rej)=>{const id=ttsSeq++;
+ const t=setTimeout(()=>{ttsWait.delete(id);rej(new Error('timeout'))},6000);ttsWait.set(id,{res,rej,t});
+ ws.send(JSON.stringify({type:'tts',id,text,lang:curLang(),rate:+$('rate').value}))});p.catch(()=>{});return p}
+function onAudio(buf){if(!AC||buf.byteLength<8)return;const id=new DataView(buf).getUint32(0),w=ttsWait.get(id);if(!w)return;
+ clearTimeout(w.t);ttsWait.delete(id);
+ new Promise((res,rej)=>AC.decodeAudioData(buf.slice(4),res,rej)).then(w.res,w.rej)}
+// Cancela SOLO si hay algo activo (en Safari, cancel() + speak() en el mismo instante puede dejar el speak() mudo). Devuelve true si canceló.
+function stopAll(){gen++;speakSeq++;hold=false;clearTimeout(holdT);let c=false;
+ try{if(synth&&(synth.speaking||synth.pending||synth.paused)){synth.cancel();c=true}}catch{}
+ try{curSrc&&curSrc.stop()}catch{}curSrc=null;curDone=null;busy=false;return c}
+// ---- speakText(): la ÚNICA función que produce voz. La cola solo decide QUÉ se lee; «Probar voz», el aviso de activación y los comentarios terminan aquí ----
+const TEST_PHRASE='Hola, esta es una prueba del lector de comentarios de ChatIa.',START_TIMEOUT=3000;
+const terr=(...a)=>(console.error||console.log).apply(console,a);
+const num=(id,d,lo,hi)=>{const x=parseFloat($(id).value);return Number.isFinite(x)?Math.min(hi,Math.max(lo,x)):d}; // el 0 es válido (volumen 0 = silencio)
+function ttsState(){return synth?`speaking=${synth.speaking} pending=${synth.pending} paused=${synth.paused}`:'sin speechSynthesis'}
+function buildUtterance(text,noVoice){ // utterance NUEVO cada vez; la voz elegida se busca de nuevo en getVoices()
+ try{const fv=synth.getVoices();if(fv&&fv.length)voices=fv}catch{}
+ const u=new SpeechSynthesisUtterance(text),v=noVoice?null:selVoice();
+ if(v){u.voice=v;u.lang=v.lang}else u.lang=curLang()==='es'?'es-ES':'en-US';
+ u.rate=num('rate',1,.1,10);u.volume=num('vol',1,0,1);return {u,v}}
+// onDone se llama UNA sola vez (fin, error o fallo de arranque). alive(): ¿sigue siendo válida esta locución? (si no, no se reintenta).
+// Si la voz elegida falla o no arranca, se reintenta UNA vez con la voz predeterminada del idioma (Safari lista voces que no puede reproducir).
+function speakText(text,{onStart=()=>{},onDone=()=>{},alive=()=>true}={}){
+ if(!synth){terr('[TTS] ERROR: speechSynthesis no disponible');return onDone()}
+ if(!text){terr('[TTS] ERROR: texto vacío');return onDone()}
+ let started=false,ended=false,tries=0,timer=0,att=null;
+ const end=()=>{if(ended)return;ended=true;clearTimeout(timer);att&&live.delete(att.u);onDone()};
+ const retry=why=>{clearTimeout(timer);if(tries++>=1||!alive()){terr('[TTS] ERROR: no se pudo hablar ('+why+')');return end()}
+  att.dead=true;live.delete(att.u);dbg('[TTS] reintentando con la voz predeterminada ('+why+')');
+  try{synth.cancel()}catch{}try{synth.resume()}catch{}
+  setTimeout(()=>{if(ended)return;if(!alive())return end();attempt()},120)};
+ const attempt=()=>{const {u,v}=buildUtterance(text,tries>0),a=att={u,dead:false};live.add(u);cur=u;
+  if(live.size>8)live.delete(live.values().next().value);
+  u.onstart=()=>{if(a.dead)return;started=true;clearTimeout(timer);dbg('[TTS] HABLANDO:',text);onStart()};
+  u.onend=()=>{if(a.dead)return;dbg('[TTS] TERMINADO');end()};
+  u.onerror=e=>{if(a.dead)return;const c=e&&e.error;
+   if(c==='canceled'||c==='interrupted'){dbg('[TTS] cancelada');return end()}
+   terr('[TTS] ERROR:',c||e);
+   if(c==='not-allowed'){terr('[TTS] Safari bloqueó el audio: hace falta un clic del usuario (pulsa «Probar voz» o activa «Leer comentarios»).');return end()}
+   retry('error '+(c||'desconocido'))};
+  dbg('[TTS] voz seleccionada:',v?`${v.name} (${v.lang})`:'(predeterminada del sistema)','| velocidad',u.rate,'| volumen',u.volume);
+  if(u.volume===0)dbg('[TTS] AVISO: el volumen está en 0, no se oirá nada');
+  try{synth.speak(u)}catch(e){terr('[TTS] ERROR:',e);return retry('excepción en speak()')}
+  timer=setTimeout(()=>{if(started||ended)return;terr(`[TTS] ERROR: no empezó a hablar en ${START_TIMEOUT/1000} s (${ttsState()})`);retry('sin arranque')},START_TIMEOUT)};
+ attempt()}
+function sayBrowser(it,done){if(!synth)return done();
+ try{if(synth.paused)synth.resume()}catch{}
+ speakText(it.text,{onDone:()=>done(),alive:()=>curDone===done})}
+function playBuffer(buf,done){try{const s=AC.createBufferSource(),g=AC.createGain();s.buffer=buf;g.gain.value=+$('vol').value;s.connect(g);g.connect(AC.destination);
+ s.onended=()=>done();curSrc=s;if(AC.state!=='running')AC.resume().catch(()=>{});dbg('[TTS SPEAKING] (servidor)');s.start()}catch{done()}}
+function speakItem(it){busy=true;const g=gen;let fin=false;
+ const done=(noGap)=>{if(fin||g!==gen)return;fin=true;curDone=null;curSrc=null;busy=false;if(noGap!==true)last=Date.now();dbg('[TTS FINISHED]',it.text);
+  pump()}; // al terminar, revisa AL INSTANTE la antigüedad de lo pendiente (sin esperar a ningún timer)
+ curDone=done;deadline=Date.now()+Math.max(8000,it.text.length*250)+(it.audio?8000:0);
+ if(it.audio)it.audio.then(buf=>{if(fin)return;if(!queue.isFresh(it))return done(true);playBuffer(buf,done)})
+  .catch(()=>{if(fin)return;if(!queue.isFresh(it))return done(true);dbg('[TTS] Falló la voz del servidor, uso la del navegador');sayBrowser(it,done)});
+ else sayBrowser(it,done)}
+// Voz inmediata e independiente de TikTok, de la cola, de los filtros y de «Leer comentarios» (la usan «Probar voz» y el aviso de activación). Solo prepara el terreno y llama a speakText().
+function speakNow(text,{onStart,onDone}={}){
+ if(!synth){terr('[TTS] ERROR: speechSynthesis no disponible');return alert('Este navegador no soporta voz.')}
+ const cancelled=stopAll(),my=++speakSeq;hold=true;clearTimeout(holdT);holdT=setTimeout(()=>{if(my===speakSeq)hold=false},15000);
+ const go=()=>{if(my!==speakSeq)return;try{if(synth.paused)synth.resume()}catch{}
+  speakText(text,{onStart,alive:()=>my===speakSeq,onDone:()=>{if(onDone)onDone();if(my===speakSeq){hold=false;clearTimeout(holdT);pump()}}})};
+ if(cancelled)setTimeout(go,60);else go()} // sin nada activo se habla en el mismo instante del clic; tras un cancel() se espera un instante
+function testVoice(){
+ if(!synth){terr('[TTS TEST] ERROR: speechSynthesis no disponible en este navegador');return alert('Este navegador no soporta voz.')}
+ console.log('[TTS TEST] speechSynthesis disponible');loadVoices();console.log('[TTS TEST] voces disponibles:',voices.length);
+ speakNow(TEST_PHRASE,{onStart:()=>console.log('[TTS TEST] START'),onDone:()=>{console.log('[TTS TEST] END');setTimeout(()=>console.log('[TTS TEST] estado final:',ttsState()),300)}})}
+// DIAGNÓSTICO TEMPORAL (solo consola, no está conectado a ningún botón ni a la cola): testSpeechDirect() o testSpeechDirect({cancel:false})
+function testSpeechDirect({cancel=true}={}){
+ if(cancel)synth.cancel();
+ const u=new SpeechSynthesisUtterance('Hola, esta es una prueba de ChatIa'),v=(synth.getVoices(),selVoice());
+ if(v){u.voice=v;u.lang=v.lang}else u.lang='es-ES';
+ u.rate=num('rate',1,.1,10);u.volume=num('vol',1,0,1);window.__directUtt=u;
+ u.onstart=()=>console.log('[TTS DIRECT] START');u.onend=()=>console.log('[TTS DIRECT] END');u.onerror=e=>terr('[TTS DIRECT] ERROR',e);
+ synth.speak(u)}
+window.testSpeechDirect=testSpeechDirect;
+// Reproduce el siguiente comentario si procede. Se llama (1) al llegar un comentario, (2) al terminar una frase y (3) desde el latido del worker.
+function pump(){if(!$('on').checked)return;queue.prune();qlabel();if(busy||hold||!queue.length)return;
+ const now=Date.now();if(now-last<$('gap').value*1000)return;
+ const pm=+$('pm').value;while(stamps.length&&now-stamps[0]>6e4)stamps.shift();if(pm&&stamps.length>=pm)return;
+ const it=queue.next();if(!it){qlabel();return}
+ lastLag=now-it.receivedAt;stamps.push(now);qlabel();speakItem(it)}
+function enqueue(text,at,id){const n=Date.now();
+ // solo comentarios NUEVOS: posteriores a activar el lector y al periodo de gracia tras conectar
+ if(!$('on').checked)return dbg('[QUEUE] ignorado: «Leer comentarios» está desactivado');
+ if(n<enabledAt)return dbg('[QUEUE] ignorado: llegó antes de activar el lector');
+ if(n<readyAt)return dbg('[QUEUE] ignorado: '+(readyAt===Infinity?'el LIVE aún no está confirmado como conectado':'periodo de gracia tras conectar ('+Math.ceil((readyAt-n)/1000)+' s)'));
+ if(!text)return;
+ const it={id:id||'',text,receivedAt:at||n};
+ if(!queue.push(it))return dbg('[QUEUE] descartado: id repetido',id); // ya se recibió/leyó
+ dbg('[QUEUE] comentario agregado (en cola: '+queue.length+'):',text);if(useServer())it.audio=fetchAudio(text);qlabel();pump()}
+$('on').addEventListener('change',()=>{
+ if($('on').checked){enabledAt=Date.now();queue.clear();unlockAudio();loadVoices();startKeepAlive();speakNow('Lector de comentarios activado')} // el clic desbloquea el audio en Safari
+ else{enabledAt=Infinity;queue.clear();stopAll();stopKeepAlive()}
+ qlabel()});
+$('test').onclick=()=>testVoice(); // interacción directa del usuario → speak() en el mismo clic
+// ---- visibilidad de la página ----
+let hiddenAt=0;
+function onVis(){const v=document.visibilityState;
+ if(v==='visible'){dbg('[PAGE] visible'+(hiddenAt?` (estuvo oculta ${((Date.now()-hiddenAt)/1000).toFixed(0)}s)`:''));hiddenAt=0;
+  try{synth&&synth.paused&&synth.resume()}catch{}if(AC&&AC.state!=='running')AC.resume().catch(()=>{});loadVoices();pump()}
+ else{dbg('[PAGE] hidden');hiddenAt=Date.now()}}
+document.addEventListener('visibilitychange',onVis);dbg('[PAGE]',document.visibilityState);
+window.addEventListener('online',()=>{dbg('[WS] red recuperada');reconnectAt=0});
+// ---- latido: un Worker no sufre el throttling de los timers de la página en segundo plano ----
+// (la lógica principal es por eventos: llegada de comentario y fin de frase; el latido solo cubre gaps, watchdog y WebSocket)
+function tick(){const now=Date.now();
+ if(busy&&now>deadline){dbg('[TTS] Watchdog: la voz no terminó, se libera');try{synth&&synth.cancel()}catch{}try{curSrc&&curSrc.stop()}catch{}curDone&&curDone()}
+ if(AC&&$('on').checked&&AC.state!=='running'&&now-lastResume>3000){lastResume=now;AC.resume().catch(()=>{})}
+ wsTick(now);pump()}
+try{const w=new Worker(URL.createObjectURL(new Blob(['setInterval(()=>postMessage(0),250)'],{type:'text/javascript'})));w.onmessage=tick;dbg('[PAGE] latido por Worker activo')}catch{dbg('[PAGE] sin Worker, latido por setInterval')}
+setInterval(tick,500); // respaldo si el Worker no está disponible
+// ---- UI ----
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function add(html){const c=$('chat');$('empty')?.remove();const near=c.scrollHeight-c.scrollTop-c.clientHeight<80;
+ c.insertAdjacentHTML('beforeend',html);while(c.children.length>3000)c.firstChild.remove();if(near)c.scrollTop=c.scrollHeight}
+function speakName(u){return String(u).replace(/[._]+/g,' ').trim()}
+function readChat(e){let raw=(e.text||'').trim();
+ const no=why=>dbg(`[FILTER] comentario rechazado (${why}):`,e.user,'|',raw);
+ // Filtros de LECTURA (no afectan a lo que se ve en pantalla): deben cumplirse TODOS los activos. Con comando, se lee sin el comando.
+ const f=ChatFilters.readFilter(raw,{mode:readMode(),command:$('cmd').value,donorsOnly:$('do').checked,isDonor:!!e.donor});
+ if(f===null)return no($('do').checked&&!e.donor?'solo donadores':'sin el comando o nada que leer');raw=f;
+ if(!stripEmoji(raw)&&$('eo').checked)return no('solo emojis');if(raw.length>+$('ml').value)return no('más de '+$('ml').value+' caracteres');
+ if(list('mu').includes(e.user.toLowerCase()))return no('usuario silenciado');
+ if(list('bw').some(w=>raw.toLowerCase().includes(w)))return no('palabra bloqueada');
+ if($('dd').checked){const k=raw.toLowerCase();if(recent.includes(k))return no('repetido');recent.push(k);if(recent.length>60)recent.shift()}
+ const lang=curLang(),body=normalizeTextForSpeech(raw,lang);if(!body)return no('nada que leer tras limpiar'); // solo se limpia lo que va a la voz; la pantalla muestra el original
+ dbg('[FILTER] comentario aceptado:',e.user,'|',raw);
+ enqueue($('rn').checked?`${speakName(e.user)} ${lang==='en'?'says':'dice'}: ${body}`:body,e.at,e.id)}
+// ChatIa solo trabaja con comentarios: regalos, seguidores, likes y entradas se ignoran.
+function onEvent(e){if(e.kind!=='chat')return;dbg('[CHAT] comentario recibido:',e.user,'|',e.text);S.users.add(e.user);$('s_u').textContent=S.users.size;S.c++;$('s_c').textContent=S.c;
+ add(`<div class="m">${e.avatar?`<img src="${esc(e.avatar)}" alt="" referrerpolicy="no-referrer" onerror="this.replaceWith(document.createElement('i'))">`:'<i></i>'}<div><span class="u" data-u="${esc(e.user)}">@${esc(e.user)}</span><div class="t">${esc(e.text)}</div></div></div>`);readChat(e)}
+$('chat').addEventListener('click',e=>{const u=e.target.dataset?.u;if(u){$('mu').value=($('mu').value?$('mu').value+', ':'')+u;save()}});
+function status(s,m){document.body.className=s;if(s==='connected')readyAt=Date.now()+3000;else if(s!=='reconnecting')readyAt=Infinity;
+ $('stx').textContent=s==='connected'?'EN VIVO — '+(m||''):{connecting:'Conectando…',reconnecting:'Reconectando…',error:'Error',offline:'Desconectado'}[s]+(m?' · '+m:'')}
+// ---- WebSocket con reconexión (gobernada por el latido, no por setTimeout) ----
+let lastRx=0,lastPing=0,reconnectAt=0,clockOff=Infinity;
+// Antigüedad real: usa la hora a la que el SERVIDOR recibió el evento (corrige la hora del reloj con el mínimo retraso observado),
+// de modo que un mensaje que el navegador retuvo en segundo plano no parezca «nuevo» al llegar.
+function stamp(sa){const rx=Date.now();if(!sa)return rx;clockOff=Math.min(clockOff,rx-sa);return Math.min(rx,sa+clockOff)}
+function wsTick(now){if(!wantConn)return;
+ if(ws&&ws.readyState===1){
+  if(now-lastPing>20000){lastPing=now;ws.send(JSON.stringify({type:'ping',t:now}))} // tráfico ENTRANTE para Render: evita que se duerma
+  if(now-lastRx>60000){dbg('[WS] sin respuesta del servidor, reconectando');try{ws.onclose=null;ws.close()}catch{}ws=null;status('reconnecting','sin respuesta del servidor');open()}}
+ else if((!ws||ws.readyState>1)&&now>=reconnectAt)open()}
+function open(){const w=ws=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host+'/ws');w.binaryType='arraybuffer';
+ w.onopen=()=>{retry=0;lastRx=lastPing=Date.now();dbg('[WS] conectado');if(wantConn)w.send(JSON.stringify({type:'connect',platform:'tiktok',target}))};
+ w.onmessage=m=>{lastRx=Date.now();
+  if(typeof m.data!=='string')return onAudio(m.data);
+  let d;try{d=JSON.parse(m.data)}catch{return}
+  if(d.type==='pong')return;
+  if(d.type==='hello'){serverTts=!!d.tts;engUi();return}
+  if(d.type==='tts_error'){const x=ttsWait.get(d.id);if(x){clearTimeout(x.t);ttsWait.delete(d.id);x.rej(new Error('tts'))}return}
+  if(d.type==='status')status(d.state,d.msg);
+  else if(d.type==='chat'){if(!d.comment||!d.comment.trim())return;
+   onEvent({kind:'chat',user:d.username,nick:d.nickname,text:d.comment,avatar:d.profilePicture,id:d.id,at:stamp(d.serverAt),donor:d.donor===true})}};
+ w.onclose=()=>{if(w!==ws)return;dbg('[WS] cerrado');if(wantConn){status('reconnecting','sin conexión con el servidor');reconnectAt=Date.now()+Math.min(10000,1000*2**retry++)}}}
+$('f').onsubmit=e=>{e.preventDefault();target=$('tg').value.trim();if(!target)return;wantConn=true;readyAt=Infinity;
+ // nuevo LIVE: se vacía por completo lo pendiente del anterior
+ queue.clearAll();stopAll();recent.length=0;lastLag=null;qlabel();dbg('[TTS] Cola vaciada (nuevo LIVE)');
+ S.c=0;S.users.clear();['s_u','s_c'].forEach(i=>$(i).textContent=0);
+ if(ws&&ws.readyState===1)ws.send(JSON.stringify({type:'connect',platform:'tiktok',target}));else if(!ws||ws.readyState>1)open()};
+</script></body></html>
